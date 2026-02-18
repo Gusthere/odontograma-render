@@ -1,0 +1,237 @@
+/* Estilos para odontograma por cuadrantes */
+.odontograma-area{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:4px;padding:12px 6px 12px 6px;border:1px solid #e3e3e3;background:#fff;overflow:auto}
+.odontograma-quadrant{min-height:80px;padding:10px 4px 8px 4px;display:flex;flex-wrap:nowrap;align-content:flex-start;justify-content:flex-start;overflow-x:auto;gap:3px}
+.odontograma-quadrant.header{align-items:flex-end}
+/* Dientes de adultos: cuadrados */
+.tooth{position:relative;display:inline-flex;width:42px;height:42px;background:#f7f7f7;border:1px solid #999;border-radius:4px;margin:0 1px;flex-shrink:0;align-items:center;justify-content:center;box-sizing:border-box;overflow:visible}
+/* Dientes de niños: redondos */
+.odontograma-area.tipo-nino .tooth{border-radius:50%;width:48px;height:48px}
+/* Use CSS Grid inside each tooth to avoid region overflow and overlaps */
+.tooth-inner{position:absolute;inset:1px;display:grid;grid-template-rows:30% 40% 30%;grid-template-columns:30% 40% 30%;grid-template-areas:"top top top" "left center right" "bottom bottom bottom";box-sizing:border-box;padding:0;gap:0}
+.tooth .region{box-sizing:border-box;border:0;overflow:hidden;background:transparent;display:block;width:35%;height:35%}
+/* Regiones para adultos (grid areas) */
+.tooth .region-top{grid-area:top;border-left:0;border-right:0;border-top:0}
+.tooth .region-bottom{grid-area:bottom;border-left:0;border-right:0;border-bottom:0}
+.tooth .region-left{grid-area:left;border-top:0;border-bottom:0;border-left:0;min-width:0}
+.tooth .region-right{grid-area:right;border-top:0;border-bottom:0;border-right:0;min-width:0}
+.tooth .region-center{grid-area:center;border:0}
+/* Ajustes visuales para que top/bottom ocupen todo el ancho y laterales no sobresalgan */
+.tooth .region-top, .tooth .region-bottom{border-top:1px solid rgba(0,0,0,0.08);border-bottom:1px solid rgba(0,0,0,0.06)}
+.tooth .region-left, .tooth .region-right{border-left:1px solid rgba(0,0,0,0.06);border-right:1px solid rgba(0,0,0,0.06)}
+
+/* Visible mark styles specifically for regions (higher specificity than .tooth .region) */
+.tooth .region.mark-blue{background:rgba(0,123,255,0.70);z-index:2}
+.tooth .region.mark-red{background:rgba(220,53,69,0.72);z-index:2}
+
+/* Tamaño de caries (marcado parcial): pequeña/mediana/grande */
+.tooth .region.caries-size-1{opacity:0.45}
+.tooth .region.caries-size-2{opacity:0.75}
+.tooth .region.caries-size-3{opacity:1}
+
+/* Ensure that when a tooth has partial marks, the center is visibly smaller */
+.tooth .region-center{opacity:0.95;z-index:0}
+/* Ajustes para niños: regiones sin sobresalir del círculo */
+.odontograma-area.tipo-nino .tooth-inner{grid-template-rows:25% 50% 25%;grid-template-columns:30% 40% 30%;border-radius:50%;overflow:hidden}
+.odontograma-area.tipo-nino .tooth{overflow:visible}
+.odontograma-area.tipo-nino .tooth .region-top{border-top-left-radius:50%;border-top-right-radius:50%}
+.odontograma-area.tipo-nino .tooth .region-bottom{border-bottom-left-radius:50%;border-bottom-right-radius:50%}
+.odontograma-area.tipo-nino .tooth .region-top{grid-area:top}
+.odontograma-area.tipo-nino .tooth .region-bottom{grid-area:bottom}
+.odontograma-area.tipo-nino .tooth .region-left{grid-area:left}
+.odontograma-area.tipo-nino .tooth .region-right{grid-area:right}
+.odontograma-area.tipo-nino .tooth .region-center{grid-area:center}
+/* marks */
+.mark-blue{background:rgba(0,123,255,0.45)}
+.mark-red{background:rgba(220,53,69,0.45)}
+.tooth.extraction::after{content:'X';position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px;border-radius:4px}
+.tooth.extraction.mark-red::after{background:rgba(220,53,69,0.85)}
+.tooth.extraction.mark-blue::after{background:rgba(0,123,255,0.85)}
+.odontograma-area.tipo-nino .tooth.extraction::after{border-radius:50%}
+/* when using expanded extraction overlay, keep circular radius for child teeth */
+.odontograma-area.tipo-nino .tooth.extraction::after{border-radius:50%}
+.odontograma-area.tipo-nino .tooth.overlay-s::after{border-radius:50%}
+/* Número del diente: mostrar arriba (fuera del diente) */
+.tooth-number{position:absolute;left:50%;top:-18px;transform:translateX(-50%);font-size:13px;color:#111827;font-weight:800;z-index:12;background:transparent;padding:0;border-radius:0;pointer-events:none;white-space:nowrap;text-shadow:0 1px 0 rgba(255,255,255,0.95);user-select:none;-webkit-user-select:none;-ms-user-select:none}
+
+/* Evitar selección de texto al interactuar con el odontograma */
+.odontograma-area, .odontograma-area *{user-select:none;-webkit-user-select:none;-ms-user-select:none}
+
+/* Para dientes de niño: permitir que el número sobresalga visualmente fuera del contenedor circular
+	(evita que se corte por el borde redondeado). Ajustar ligeramente la posición para que se vea
+	por encima del diente). */
+.odontograma-area.tipo-nino .tooth-number{top:-20px;left:50%;right:auto;transform:translateX(-50%);z-index:12}
+.tool-btn.active{box-shadow:inset 0 0 0 2px rgba(0,123,255,0.12)}
+.color-btn.active{box-shadow:inset 0 0 0 2px rgba(0,0,0,0.06)}
+.tool-tooth{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border:1px solid transparent;border-radius:12px;background:transparent;transition:all 180ms cubic-bezier(.2,.9,.2,1)}
+.tool-tooth:hover{background:#f4f4f4;cursor:pointer;transform:translateY(-2px);box-shadow:0 6px 14px rgba(23,35,56,0.06)}
+.tool-tooth:focus{outline:none;box-shadow:0 0 0 4px rgba(0,123,255,0.10)}
+.tool-shape{width:44px;height:44px;display:block}
+.tool-shape-nino{display:none}
+/* show correct tool shape according to selected dentadura type */
+#odontogramaArea.tipo-nino ~ .odontograma-tools #odontogramaTools .tool-shape-adult{display:none}
+#odontogramaArea.tipo-nino ~ .odontograma-tools #odontogramaTools .tool-shape-nino{display:block}
+/* fallback: also toggle via class on tools container */
+#odontogramaTools.tipo-nino .tool-shape-adult{display:none}
+#odontogramaTools.tipo-nino .tool-shape-nino{display:block}
+
+/* grey mark styles inside tool buttons */
+.tool-shape .mark-grey-center{fill:#9aa0a6}
+.tool-shape .mark-grey-top{fill:#9aa0a6}
+.tool-shape .mark-grey-left{fill:#9aa0a6}
+.tool-shape .mark-grey-right{fill:#9aa0a6}
+.tool-shape .mark-grey-bottom{fill:#9aa0a6}
+
+/* partial tool dynamic states: default show center only */
+.tool-tooth .mark-grey-center,.tool-tooth .mark-grey-top,.tool-tooth .mark-grey-left,.tool-tooth .mark-grey-right,.tool-tooth .mark-grey-bottom{opacity:0;transition:opacity 220ms}
+.tool-tooth.show-center .mark-grey-center{opacity:1}
+.tool-tooth.show-top .mark-grey-top{opacity:1}
+.tool-tooth.show-left .mark-grey-left{opacity:1}
+.tool-tooth.show-right .mark-grey-right{opacity:1}
+.tool-tooth.show-bottom .mark-grey-bottom{opacity:1}
+
+/* Lines between quadrants: draw simple Cartesian axes (black lines) centered between grid cells */
+.odontograma-area .odontograma-grid{position:relative}
+.odontograma-area .odontograma-grid::before{content:'';position:absolute;left:53.6%;top:0;bottom:0;width:2px;background:#000;opacity:0.15;transform:translateX(-50%);pointer-events:none}
+.odontograma-area.tipo-nino .odontograma-grid::before{left:55.0%}
+.odontograma-area .odontograma-grid::after{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:#000;opacity:0.15;transform:translateY(-50%);pointer-events:none}
+.odontograma-divider-vertical{border-left:2px solid #e6e6e6}
+.odontograma-divider-horizontal{border-top:2px solid #e6e6e6}
+.odontograma-area > .odontograma-grid{grid-column:1 / -1;width:100%}
+.odontograma-grid td.odontograma-cell{padding:6px}
+@media(max-width:767px){.odontograma-area{grid-template-columns:1fr 1fr}}
+
+/* SVG-specific region styles: allow .region classes on SVG shapes to be filled
+	and keep visual parity with the div-based regions used previously. */
+.tooth-svg{width:100%;height:100%;display:block}
+.tooth-svg .stroke{stroke:#1e2a38;stroke-width:2;fill:none;pointer-events:none}
+.tooth-svg .region{fill:transparent;cursor:pointer;pointer-events:all}
+.tooth-svg .region.mark-blue{fill:rgba(0,123,255,0.70)}
+.tooth-svg .region.mark-red{fill:rgba(220,53,69,0.72)}
+
+/* Tamaño de caries (SVG): ajustar intensidad manteniendo el color/gradiente */
+.tooth-svg .region.caries-size-1{fill-opacity:0.45}
+.tooth-svg .region.caries-size-2{fill-opacity:0.75}
+.tooth-svg .region.caries-size-3{fill-opacity:1}
+
+/* Total-line and outline placeholders: default transparent stroke; color applied via mark-blue/mark-red classes */
+.tooth-svg .center-line-inner,
+.tooth-svg .center-line-outer,
+.tooth-svg .outline-inner,
+.tooth-svg .outline-outer,
+.tooth-svg .bottom-line-inner,
+.tooth-svg .bottom-line-outer { stroke: transparent; stroke-width:16; fill:none; pointer-events:none }
+
+.tooth-svg .center-line-inner.mark-blue,
+.tooth-svg .outline-inner.mark-blue,
+.tooth-svg .bottom-line-inner.mark-blue { stroke: rgba(0,123,255,0.95) }
+.tooth-svg .center-line-inner.mark-red,
+.tooth-svg .outline-inner.mark-red,
+.tooth-svg .bottom-line-inner.mark-red { stroke: rgba(220,53,69,0.95) }
+
+.tooth-svg .center-line-outer.mark-blue,
+.tooth-svg .outline-outer.mark-blue,
+.tooth-svg .bottom-line-outer.mark-blue { stroke: rgba(0,123,255,0.95) }
+.tooth-svg .center-line-outer.mark-red,
+.tooth-svg .outline-outer.mark-red,
+.tooth-svg .bottom-line-outer.mark-red { stroke: rgba(220,53,69,0.95) }
+
+/* Slight positional shifts so inner (blue) and outer (red) segments are both visible when mixed */
+.tooth-svg .center-line-inner,
+.tooth-svg .center-line-outer,
+.tooth-svg .bottom-line-inner,
+.tooth-svg .bottom-line-outer { transform-box: fill-box; transform-origin: center; }
+.tooth-svg .center-line-inner.mark-blue,
+.tooth-svg .center-line-inner.mark-mixed { transform: translateX(-3px); }
+.tooth-svg .center-line-outer.mark-red,
+.tooth-svg .center-line-outer.mark-mixed { transform: translateX(3px); }
+.tooth-svg .bottom-line-inner.mark-blue,
+.tooth-svg .bottom-line-inner.mark-mixed { transform: translateY(-3px); }
+.tooth-svg .bottom-line-outer.mark-red,
+.tooth-svg .bottom-line-outer.mark-mixed { transform: translateY(3px); }
+
+/* Mixed state fallback: purple stroke for total segments */
+/* Mixed state: show inner parts blue and outer parts red for segments */
+.tooth-svg .center-line-inner.mark-mixed { stroke: rgba(0,123,255,0.95) }
+.tooth-svg .center-line-outer.mark-mixed { stroke: rgba(220,53,69,0.95) }
+.tooth-svg .outline-inner.mark-mixed { stroke: rgba(0,123,255,0.95) }
+.tooth-svg .outline-outer.mark-mixed { stroke: rgba(220,53,69,0.95) }
+.tooth-svg .bottom-line-inner.mark-mixed { stroke: rgba(0,123,255,0.95) }
+.tooth-svg .bottom-line-outer.mark-mixed { stroke: rgba(220,53,69,0.95) }
+
+/* overlay 'S' similar to extraction but with letter S. When mixed, show a gradient background. */
+.tooth.overlay-s::after{content:'S';position:absolute;left:-1px;top:-1px;width:calc(100% + 2px);height:calc(100% + 2px);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px;border-radius:4px;z-index:6}
+.tooth.overlay-s.mark-red::after{background:rgba(220,53,69,0.95)}
+.tooth.overlay-s.mark-blue::after{background:rgba(0,123,255,0.95)}
+.tooth.overlay-s.mark-mixed::after{background:linear-gradient(90deg, rgba(0,123,255,0.95) 0%, rgba(220,53,69,0.95) 100%)}
+
+/* Check (resuelto): indicador sin tapar el diente */
+.tooth.overlay-check::before{content:'✓';position:absolute;right:-6px;top:-6px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;background:rgba(46,125,50,0.95);color:#fff;font-weight:900;font-size:14px;border-radius:999px;z-index:10;pointer-events:none;box-shadow:0 1px 2px rgba(0,0,0,0.25)}
+.odontograma-area.tipo-nino .tooth.overlay-check::before{right:-6px;top:-8px}
+
+/* Ensure extraction overlay reaches the edges (covers tooth border) */
+.tooth.extraction::after{position:absolute;left:-1px;top:-1px;width:calc(100% + 2px);height:calc(100% + 2px);z-index:6;border-radius:4px}
+.tooth.extraction.mark-mixed::after{background:linear-gradient(90deg, rgba(0,123,255,0.95) 0%, rgba(220,53,69,0.95) 100%)}
+
+/* Partial region mixed fallback: use a subtle two-tone diagonal gradient via background-image on SVG container fallback */
+.tooth .region.mark-mixed{background:linear-gradient(135deg, rgba(0,123,255,0.50) 0%, rgba(220,53,69,0.50) 100%);z-index:2}
+/* SVG mixed fills are applied per-region via JS to select the appropriate directional/radial gradient. */
+
+/* Mixed color button styling */
+.color-btn[data-color="blue"],
+.color-btn[data-color="red"]{
+	border-radius:8px;
+	transition:transform 140ms, box-shadow 140ms;
+}
+
+/* Normalize size for all color buttons so they appear as a uniform capsule */
+.color-btn{
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	height:36px;
+	padding:.25rem .65rem;
+	line-height:1;
+	box-sizing:border-box;
+	border-width:1px; /* ensure consistent border thickness */
+}
+
+.color-btn[data-color="mixed"]{
+	/* keep mixed visually distinctive: NO rounded corners per request */
+	border-radius:0;
+	/* show gradient as border when not active; transparent background by default */
+	background: transparent;
+	color: #333;
+	border: 1px solid transparent; /* thinner border so height matches siblings */
+	background-image: linear-gradient(white,white), linear-gradient(90deg,#007bff,#dc3545);
+	background-origin: padding-box, border-box;
+	background-clip: padding-box, border-box;
+}
+.color-btn[data-color="mixed"].active{
+	background: linear-gradient(90deg,#007bff 0%,#dc3545 100%);
+	color: #fff;
+	/* bespoke colored inner outline for active mixed button */
+	box-shadow: inset 0 0 0 2px rgba(0,123,255,0.18);
+	outline: 2px solid rgba(0,123,255,0.10);
+}
+
+/* Make the 'Limpiar marcas' button more rounded and visually consistent */
+/* Align color buttons and clear button on the same row and style clear button */
+#odontogramaTools .btn-group,
+#odontogramaTools .btn-group + #odontogramaClear,
+#odontogramaTools .btn-group + #odontogramaClear:hover{
+	display:inline-flex;
+	align-items:center;
+}
+
+#odontogramaClear{
+	border-radius:10px;
+	padding:6px 10px;
+	transition:box-shadow 160ms, transform 160ms;
+	margin-left:8px; /* small gap from the color buttons */
+	margin-top:0.2rem; /* align vertically with btn-group */
+	vertical-align:middle;
+}
+#odontogramaClear:hover{transform:translateY(-1px);box-shadow:0 6px 12px rgba(23,35,56,0.06)}
+
+/* Ensure mixed button remains square even when active */
+.color-btn[data-color="mixed"].active{border-radius:0}

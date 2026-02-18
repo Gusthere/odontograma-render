@@ -1,0 +1,588 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+
+    <!-- jQuery necesario para tu render -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Tu CSS original -->
+    <link rel="stylesheet" href="odontograma.css" />
+    <link rel="stylesheet" href="sb-admin-2.css" />
+
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        background: white;
+      }
+
+      #odontogramaArea {
+        width: fit-content;
+        max-width: 100%;
+        margin: 0 auto;
+        padding-top: 36px;
+        box-sizing: border-box;
+        overflow: visible;
+      }
+
+      .odontograma-grid {
+        width: auto !important;
+        margin: 0 auto;
+        overflow: visible;
+      }
+
+      .odontograma-quadrant {
+        overflow: visible;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="odontogramaArea" class="odontograma-area"></div>
+
+    <script>
+      /* ================================
+        DATA INYECTADA DESDE NODE
+      ================================ */
+      const DATA = window.__DATA__ || [];
+
+      /* ================================
+        CONSTANTES
+      ================================ */
+      var ADULT_COORDS = [
+        "18",
+        "17",
+        "16",
+        "15",
+        "14",
+        "13",
+        "12",
+        "11",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "48",
+        "47",
+        "46",
+        "45",
+        "44",
+        "43",
+        "42",
+        "41",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "38",
+      ];
+
+      var NINO_COORDS = [
+        "55",
+        "54",
+        "53",
+        "52",
+        "51",
+        "61",
+        "62",
+        "63",
+        "64",
+        "65",
+        "85",
+        "84",
+        "83",
+        "82",
+        "81",
+        "71",
+        "72",
+        "73",
+        "74",
+        "75",
+      ];
+
+      /* ================================
+        HELPERS
+      ================================ */
+
+      function applyRegionMixed($reg) {
+        try {
+          var region = $reg.attr("data-region") || $reg.data("region");
+          var gid = mapRegionToGradientId(region);
+          // set SVG fill to gradient and add marker class
+          // apply as inline style to ensure gradient is used (overrides stylesheet)
+          $reg.css("fill", "url(#" + gid + ")");
+          $reg.addClass("mark-mixed");
+        } catch (e) {
+          console.warn("applyRegionMixed error", e);
+        }
+      }
+
+      function setCariesSize($reg, size) {
+        $reg.removeClass("caries-size-1 caries-size-2 caries-size-3");
+        if (size === 1) $reg.addClass("caries-size-1");
+        else if (size === 2) $reg.addClass("caries-size-2");
+        else if (size === 3) $reg.addClass("caries-size-3");
+      }
+
+      /* ================================
+        APLICAR DAÑOS
+      ================================ */
+
+      function renderOdontoFromConsulta(arr) {
+        if (!Array.isArray(arr) || !arr.length) {
+          $("#odontogramaArea").empty();
+          return;
+        }
+        var countN = 0,
+          countA = 0;
+        arr.forEach(function (d) {
+          var c = (d.coordenada || "").toString();
+          if (NINO_COORDS.indexOf(c) !== -1) countN++;
+          if (ADULT_COORDS.indexOf(c) !== -1) countA++;
+        });
+        var inferred = countN > countA ? "nino" : "adulto";
+        // volver a renderizar odontograma con el tipo inferido
+        renderOdontograma(inferred);
+
+        arr.forEach(function (d) {
+          try {
+            const coord = String(d.coordenada || "");
+            const dano = String(d.dano || "").toLowerCase();
+            const color = String(d.color || "").toLowerCase();
+            const ubic = String(d.ubicacion || "").toLowerCase();
+
+            const $tooth = $("#odontogramaArea").find(
+              '.tooth[data-tooth="' + coord + '"]',
+            );
+
+            if (!$tooth.length) return;
+
+            const $svg = $tooth.find("svg");
+
+            // =========================
+            // EXTRACCIÓN / TOTAL
+            // =========================
+            if (dano.includes("extr")) {
+              $tooth.addClass("extraction");
+
+              if (color === "blue") $tooth.addClass("mark-blue");
+              if (color === "red") $tooth.addClass("mark-red");
+              if (color === "mixed") $tooth.addClass("mark-mixed");
+
+              $tooth
+                .find(".region")
+                .removeClass("mark-blue mark-red mark-mixed")
+                .removeAttr("fill")
+                .css("fill", "");
+
+              return;
+            }
+
+            // marca de verificación / check (acepta variantes)
+            if (
+              dano.indexOf("check") !== -1 ||
+              dano.indexOf("overlay_check") !== -1 ||
+              dano.indexOf("overlay-check") !== -1
+            ) {
+              $tooth.addClass("overlay-check");
+              return;
+            }
+
+            // =========================
+            // MARCAS TOTALES (SVG)
+            // =========================
+            if (dano === "center_lin") {
+              if (color === "blue") {
+                $svg.find(".center-line-inner").addClass("mark-blue");
+              } else if (color === "red") {
+                $svg.find(".center-line-outer").addClass("mark-red");
+              } else if (color === "mixed") {
+                $svg
+                  .find(".center-line-inner, .center-line-outer")
+                  .addClass("mark-mixed");
+              }
+              return;
+            }
+
+            if (dano === "outline") {
+              if (color === "blue") {
+                $svg.find(".outline-inner").addClass("mark-blue");
+              } else if (color === "red") {
+                $svg.find(".outline-outer").addClass("mark-red");
+              } else if (color === "mixed") {
+                $svg
+                  .find(".outline-inner, .outline-outer")
+                  .addClass("mark-mixed");
+              }
+              return;
+            }
+
+            if (dano === "bottom_lin") {
+              if (color === "blue") {
+                $svg.find(".bottom-line-inner").addClass("mark-blue");
+              } else if (color === "red") {
+                $svg.find(".bottom-line-outer").addClass("mark-red");
+              } else if (color === "mixed") {
+                $svg
+                  .find(".bottom-line-inner, .bottom-line-outer")
+                  .addClass("mark-mixed");
+              }
+              return;
+            }
+
+            if (dano === "overlay_s") {
+              $tooth.addClass("overlay-s");
+
+              if (color === "blue") {
+                $tooth.addClass("mark-blue");
+              } else if (color === "red") {
+                $tooth.addClass("mark-red");
+              } else if (color === "mixed") {
+                $tooth.addClass("mark-mixed");
+              }
+
+              return;
+            }
+
+            // =========================
+            // MARCAS POR REGIÓN
+            // =========================
+            let region = null;
+            if (ubic.includes("sup")) region = "top";
+            if (ubic.includes("inf")) region = "bottom";
+            if (ubic.includes("izq")) region = "left";
+            if (ubic.includes("der")) region = "right";
+            if (ubic.includes("cen")) region = "center";
+
+            if (!region) return;
+
+            const $reg = $tooth.find('.region[data-region="' + region + '"]');
+            if (!$reg.length) return;
+
+            // tamaño: por compatibilidad, si no viene tamaño, asumimos 3
+            var size = 3;
+            try {
+              var danStr = (d.dano || "").toString().toLowerCase();
+              var mm = danStr.match(/parcial\D*([123])/i);
+              if (mm && mm[1]) size = parseInt(mm[1], 10);
+            } catch (e) {}
+            if (![1, 2, 3].includes(size)) size = 3;
+
+            if (color === "blue") {
+              $reg.addClass("mark-blue");
+            } else if (color === "red") {
+              $reg.addClass("mark-red");
+            } else if (color === "mixed") {
+              applyRegionMixed($reg);
+            }
+            // aplicar tamaño de caries (parcial)
+            setCariesSize($reg, size);
+          } catch (e) {
+            console.warn("Error pintando odontograma (load)", e);
+          }
+        });
+
+        // bloquear select de tipo si existe
+        try {
+          $("#tipo_dentadura").prop("disabled", true);
+        } catch (e) {}
+      }
+
+      /* ================================
+        RENDER ODONTOGRAMA BASE
+      ================================ */
+
+      function renderOdontograma(tipo) {
+        var $area = $("#odontogramaArea").empty();
+        // Agregar/remover clase para diferenciar estilos de adultos vs niños
+        if (tipo === "nino") {
+          $area.addClass("tipo-nino");
+        } else {
+          $area.removeClass("tipo-nino");
+        }
+        // also mark tools container so tool buttons show correct shape
+        try {
+          $("#odontogramaTools").toggleClass("tipo-nino", tipo === "nino");
+        } catch (e) {}
+        // definir numeración por cuadrante según tipo
+        var ul, ur, ll, lr; // upper-left, upper-right, lower-left, lower-right
+        if (tipo === "nino") {
+          ul = ["55", "54", "53", "52", "51"];
+          ur = ["61", "62", "63", "64", "65"];
+          ll = ["85", "84", "83", "82", "81"];
+          lr = ["71", "72", "73", "74", "75"];
+        } else {
+          ul = ["18", "17", "16", "15", "14", "13", "12", "11"];
+          ur = ["21", "22", "23", "24", "25", "26", "27", "28"];
+          ll = ["48", "47", "46", "45", "44", "43", "42", "41"];
+          lr = ["31", "32", "33", "34", "35", "36", "37", "38"];
+        }
+
+        // crear los 4 cuadrantes
+        var $q1 = $(
+          '<div class="odontograma-quadrant" data-quadrant="ul"></div>',
+        );
+        var $q2 = $(
+          '<div class="odontograma-quadrant" data-quadrant="ur"></div>',
+        );
+        var $q3 = $(
+          '<div class="odontograma-quadrant" data-quadrant="ll"></div>',
+        );
+        var $q4 = $(
+          '<div class="odontograma-quadrant" data-quadrant="lr"></div>',
+        );
+
+        function makeTooth(num) {
+          // Render tooth as inline SVG. Use square-based SVG for adults and circular for children.
+          var svg = "";
+          if (tipo === "nino") {
+            svg =
+              '\n<svg class="tooth-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">\n' +
+              "  <defs>\n" +
+              '    <linearGradient id="g_mixed_top" x1="0%" y1="0%" x2="0%" y2="100%">\n' +
+              '      <stop offset="0%" stop-color="#dc3545"/>\n' +
+              '      <stop offset="100%" stop-color="#007bff"/>\n' +
+              "    </linearGradient>\n" +
+              '    <linearGradient id="g_mixed_bottom" x1="0%" y1="0%" x2="0%" y2="100%">\n' +
+              '      <stop offset="0%" stop-color="#007bff"/>\n' +
+              '      <stop offset="100%" stop-color="#dc3545"/>\n' +
+              "    </linearGradient>\n" +
+              '    <linearGradient id="g_mixed_left" x1="0%" y1="0%" x2="100%" y2="0%">\n' +
+              '      <stop offset="0%" stop-color="#dc3545"/>\n' +
+              '      <stop offset="100%" stop-color="#007bff"/>\n' +
+              "    </linearGradient>\n" +
+              '    <linearGradient id="g_mixed_right" x1="0%" y1="0%" x2="100%" y2="0%">\n' +
+              '      <stop offset="0%" stop-color="#007bff"/>\n' +
+              '      <stop offset="100%" stop-color="#dc3545"/>\n' +
+              "    </linearGradient>\n" +
+              '    <radialGradient id="g_mixed_center" cx="50%" cy="50%" r="50%">\n' +
+              '      <stop offset="0%" stop-color="#007bff"/>\n' +
+              '      <stop offset="100%" stop-color="#dc3545"/>\n' +
+              "    </radialGradient>\n" +
+              "  </defs>\n" +
+              '  <circle cx="100" cy="100" r="90" class="stroke"/>\n' +
+              '  <circle cx="100" cy="100" r="40" class="stroke"/>\n' +
+              '  <line x1="128.3" y1="71.7" x2="163.6" y2="36.4" class="stroke"/>\n' +
+              '  <line x1="71.7" y1="71.7" x2="36.4" y2="36.4" class="stroke"/>\n' +
+              '  <line x1="71.7" y1="128.3" x2="36.4" y2="163.6" class="stroke"/>\n' +
+              '  <line x1="128.3" y1="128.3" x2="163.6" y2="163.6" class="stroke"/>\n' +
+              '  <path d="M36.4 36.4 A90 90 0 0 1 163.6 36.4 L128.3 71.7 A40 40 0 0 0 71.7 71.7 Z" class="region" data-region="top"/>\n' +
+              '  <path d="M163.6 36.4 A90 90 0 0 1 163.6 163.6 L128.3 128.3 A40 40 0 0 0 128.3 71.7 Z" class="region" data-region="right"/>\n' +
+              '  <path d="M163.6 163.6 A90 90 0 0 1 36.4 163.6 L71.7 128.3 A40 40 0 0 0 128.3 128.3 Z" class="region" data-region="bottom"/>\n' +
+              '  <path d="M36.4 163.6 A90 90 0 0 1 36.4 36.4 L71.7 71.7 A40 40 0 0 0 71.7 128.3 Z" class="region" data-region="left"/>\n' +
+              '  <circle cx="100" cy="100" r="40" class="region" data-region="center"/>\n' +
+              "  <!-- total marks: center-line (inner/outer), outline (inner/outer), bottom-line (inner/outer) -->\n" +
+              '  <path class="center-line-inner" d="M98 140 L98 10" stroke-linecap="round" stroke-width="6" fill="none"/>\n' +
+              '  <path class="center-line-outer" d="M102 140 L102 10" stroke-linecap="round" stroke-width="6" fill="none"/>\n' +
+              '  <circle class="outline-inner" cx="100" cy="100" r="78" fill="none" stroke-width="6"/>\n' +
+              '  <circle class="outline-outer" cx="100" cy="100" r="94" fill="none" stroke-width="6"/>\n' +
+              '  <line class="bottom-line-inner" x1="36.4" y1="190" x2="163.6" y2="190" stroke-linecap="round" stroke-width="6"/>\n' +
+              '  <line class="bottom-line-outer" x1="34" y1="194" x2="166" y2="194" stroke-linecap="round" stroke-width="6"/>\n' +
+              "</svg>\n";
+          } else {
+            // adulto: square-based SVG with rect center, diagonal divider lines and 4 polygon zones
+            svg =
+              '\n<svg class="tooth-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">\n' +
+              "  <defs>\n" +
+              '    <linearGradient id="g_mixed_top" x1="0%" y1="0%" x2="0%" y2="100%">\n' +
+              '      <stop offset="0%" stop-color="#dc3545"/>\n' +
+              '      <stop offset="100%" stop-color="#007bff"/>\n' +
+              "    </linearGradient>\n" +
+              '    <linearGradient id="g_mixed_bottom" x1="0%" y1="0%" x2="0%" y2="100%">\n' +
+              '      <stop offset="0%" stop-color="#007bff"/>\n' +
+              '      <stop offset="100%" stop-color="#dc3545"/>\n' +
+              "    </linearGradient>\n" +
+              '    <linearGradient id="g_mixed_left" x1="0%" y1="0%" x2="100%" y2="0%">\n' +
+              '      <stop offset="0%" stop-color="#dc3545"/>\n' +
+              '      <stop offset="100%" stop-color="#007bff"/>\n' +
+              "    </linearGradient>\n" +
+              '    <linearGradient id="g_mixed_right" x1="0%" y1="0%" x2="100%" y2="0%">\n' +
+              '      <stop offset="0%" stop-color="#007bff"/>\n' +
+              '      <stop offset="100%" stop-color="#dc3545"/>\n' +
+              "    </linearGradient>\n" +
+              '    <radialGradient id="g_mixed_center" cx="50%" cy="50%" r="50%">\n' +
+              '      <stop offset="0%" stop-color="#007bff"/>\n' +
+              '      <stop offset="100%" stop-color="#dc3545"/>\n' +
+              "    </radialGradient>\n" +
+              "  </defs>\n" +
+              '  <rect x="10" y="10" width="180" height="180" class="stroke"/>\n' +
+              '  <rect x="65" y="65" width="70" height="70" class="stroke"/>\n' +
+              '  <line x1="10" y1="10" x2="65" y2="65" class="stroke"/>\n' +
+              '  <line x1="190" y1="10" x2="135" y2="65" class="stroke"/>\n' +
+              '  <line x1="65" y1="135" x2="10" y2="190" class="stroke"/>\n' +
+              '  <line x1="135" y1="135" x2="190" y2="190" class="stroke"/>\n' +
+              '  <polygon points="10,10 190,10 135,65 65,65" class="region" data-region="top"/>\n' +
+              '  <polygon points="190,10 190,190 135,135 135,65" class="region" data-region="right"/>\n' +
+              '  <polygon points="10,190 190,190 135,135 65,135" class="region" data-region="bottom"/>\n' +
+              '  <polygon points="10,10 10,190 65,135 65,65" class="region" data-region="left"/>\n' +
+              '  <rect x="65" y="65" width="70" height="70" class="region" data-region="center"/>\n' +
+              "  <!-- total marks placeholders -->\n" +
+              '  <path class="center-line-inner" d="M98 135 L98 10" stroke-linecap="round" stroke-width="6" fill="none"/>\n' +
+              '  <path class="center-line-outer" d="M102 135 L102 10" stroke-linecap="round" stroke-width="6" fill="none"/>\n' +
+              '  <rect class="outline-inner" x="22" y="22" width="156" height="156" fill="none" stroke-width="6"/>\n' +
+              '  <rect class="outline-outer" x="6" y="6" width="188" height="188" fill="none" stroke-width="6"/>\n' +
+              '  <line class="bottom-line-inner" x1="10" y1="188" x2="190" y2="188" stroke-linecap="round" stroke-width="6"/>\n' +
+              '  <line class="bottom-line-outer" x1="6" y1="192" x2="194" y2="192" stroke-linecap="round" stroke-width="6"/>\n' +
+              "</svg>\n";
+          }
+
+          return $(
+            '<div class="tooth" data-tooth="' +
+              num +
+              '">' +
+              svg +
+              '<div class="tooth-number">' +
+              num +
+              "</div>" +
+              "</div>",
+          );
+        }
+
+        ul.forEach(function (n) {
+          $q1.append(makeTooth(n));
+        });
+        ur.forEach(function (n) {
+          $q2.append(makeTooth(n));
+        });
+        ll.forEach(function (n) {
+          $q3.append(makeTooth(n));
+        });
+        lr.forEach(function (n) {
+          $q4.append(makeTooth(n));
+        });
+
+        var $table = $(
+          '<table class="odontograma-grid" style="width:100%;border-collapse:collapse;">' +
+            "<tbody>" +
+            "<tr>" +
+            '<td class="odontograma-corner" style="width:10%;"></td>' +
+            '<td class="odontograma-header text-center" style="width:45%;font-weight:bold;">Derecho</td>' +
+            '<td class="odontograma-header text-center" style="width:45%;font-weight:bold;">Izquierdo</td>' +
+            "</tr>" +
+            "<tr>" +
+            '<td class="odontograma-side text-center" style="vertical-align:middle;font-weight:bold;">Superior</td>' +
+            '<td class="odontograma-cell" style="vertical-align:top;padding:8px;"></td>' +
+            '<td class="odontograma-cell" style="vertical-align:top;padding:8px;"></td>' +
+            "</tr>" +
+            "<tr>" +
+            '<td class="odontograma-side text-center" style="vertical-align:middle;font-weight:bold;">Inferior</td>' +
+            '<td class="odontograma-cell" style="vertical-align:top;padding:8px;"></td>' +
+            '<td class="odontograma-cell" style="vertical-align:top;padding:8px;"></td>' +
+            "</tr>" +
+            "</tbody>" +
+            "</table>",
+        );
+
+        // colocar los cuadrantes en las celdas correspondientes
+        // UL -> row2 col2, UR -> row2 col3, LL -> row3 col2, LR -> row3 col3
+        $table
+          .find("tbody tr")
+          .eq(1)
+          .find("td.odontograma-cell")
+          .eq(0)
+          .append($q1);
+        $table
+          .find("tbody tr")
+          .eq(1)
+          .find("td.odontograma-cell")
+          .eq(1)
+          .append($q2);
+        $table
+          .find("tbody tr")
+          .eq(2)
+          .find("td.odontograma-cell")
+          .eq(0)
+          .append($q3);
+        $table
+          .find("tbody tr")
+          .eq(2)
+          .find("td.odontograma-cell")
+          .eq(1)
+          .append($q4);
+
+        $area.append($table);
+        adjustChildBottomLines();
+      }
+
+      function adjustChildBottomLines() {
+        try {
+          if (!$("#odontogramaArea").hasClass("tipo-nino")) return;
+          var svgs = document.querySelectorAll("#odontogramaArea .tooth-svg");
+          var ns = "http://www.w3.org/2000/svg";
+          svgs.forEach(function (svg) {
+            try {
+              var inner = svg.querySelector(".bottom-line-inner");
+              if (inner && inner.tagName.toLowerCase() === "line") {
+                var p = document.createElementNS(ns, "path");
+                p.setAttribute("class", inner.getAttribute("class"));
+                p.setAttribute("d", "M163.6 163.6 A86 86 0 0 1 36.4 163.6");
+                p.setAttribute(
+                  "stroke-linecap",
+                  inner.getAttribute("stroke-linecap") || "round",
+                );
+                p.setAttribute(
+                  "stroke-width",
+                  inner.getAttribute("stroke-width") ||
+                    inner.getAttribute("stroke-width") ||
+                    "6",
+                );
+                p.setAttribute("fill", "none");
+                inner.parentNode.replaceChild(p, inner);
+              }
+              var outer = svg.querySelector(".bottom-line-outer");
+              if (outer && outer.tagName.toLowerCase() === "line") {
+                var p2 = document.createElementNS(ns, "path");
+                p2.setAttribute("class", outer.getAttribute("class"));
+                p2.setAttribute("d", "M166 166 A94 94 0 0 1 34 166");
+                p2.setAttribute(
+                  "stroke-linecap",
+                  outer.getAttribute("stroke-linecap") || "round",
+                );
+                p2.setAttribute(
+                  "stroke-width",
+                  outer.getAttribute("stroke-width") || "6",
+                );
+                p2.setAttribute("fill", "none");
+                outer.parentNode.replaceChild(p2, outer);
+              }
+            } catch (e) {
+              console.warn("adjustChildBottomLines inner error", e);
+            }
+          });
+        } catch (e) {
+          console.warn("adjustChildBottomLines error", e);
+        }
+      }
+
+      function mapRegionToGradientId(region) {
+        if (!region) return "g_mixed_center";
+        var r = region.toString().toLowerCase();
+        if (r === "top") return "g_mixed_top";
+        if (r === "bottom") return "g_mixed_bottom";
+        if (r === "left") return "g_mixed_left";
+        if (r === "right") return "g_mixed_right";
+        if (r === "center") return "g_mixed_center";
+        return "g_mixed_center";
+      }
+
+      /* ================================
+        EJECUCIÓN AUTOMÁTICA
+      ================================ */
+
+      $(function () {
+        renderOdontoFromConsulta(DATA);
+
+        // Señal para Puppeteer
+        window.__RENDER_DONE__ = true;
+      });
+    </script>
+  </body>
+</html>
