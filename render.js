@@ -1,5 +1,4 @@
 const puppeteer = require("puppeteer");
-const fs = require("fs");
 const path = require("path");
 
 let browser;
@@ -46,4 +45,34 @@ async function renderOdontograma(data) {
   return imageBuffer;
 }
 
-module.exports = renderOdontograma;
+async function renderOdontogramasBatch(list, options = {}) {
+  const items = Array.isArray(list) ? list : [];
+  if (!items.length) return [];
+
+  const concurrency = Math.max(1, Number(options.concurrency) || 3);
+  const results = new Array(items.length);
+  let index = 0;
+
+  async function worker() {
+    while (true) {
+      const current = index;
+      index += 1;
+      if (current >= items.length) break;
+      results[current] = await renderOdontograma(items[current]);
+    }
+  }
+
+  const workers = [];
+  const workerCount = Math.min(concurrency, items.length);
+  for (let i = 0; i < workerCount; i += 1) {
+    workers.push(worker());
+  }
+
+  await Promise.all(workers);
+  return results;
+}
+
+module.exports = {
+  renderOdontograma,
+  renderOdontogramasBatch,
+};

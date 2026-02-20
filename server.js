@@ -1,8 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const renderOdontograma = require("./render");
-const path = require("path");
-const fs = require("fs");
+const { renderOdontograma, renderOdontogramasBatch } = require("./render");
 
 const app = express();
 app.use(bodyParser.json({ limit: "10mb" }));
@@ -23,12 +21,22 @@ app.post("/render", async (req, res) => {
 });
 
 app.post("/render-multiple", async (req, res) => {
-  const odontogramas = req.body; // array
+  const odontogramas = Array.isArray(req.body)
+    ? req.body
+    : Array.isArray(req.body?.data)
+      ? req.body.data
+      : [];
 
   try {
-    const results = await Promise.all(
-      odontogramas.map((o) => renderOdontograma(o)),
-    );
+    if (!odontogramas.length) {
+      return res.status(400).json({
+        success: false,
+        error: "Payload inválido",
+        details: "Debe enviar un arreglo de odontogramas o { data: [...] }",
+      });
+    }
+
+    const results = await renderOdontogramasBatch(odontogramas, { concurrency: 3 });
 
     res.json({
       success: true,
