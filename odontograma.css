@@ -102,6 +102,17 @@
 #odontogramaTools.tipo-nino .bridge-tool-btn:not(.bridge-has-start) .tool-shape-nino.bridge-icon-start{display:block}
 #odontogramaTools.tipo-nino .bridge-tool-btn.bridge-has-start .tool-shape-nino.bridge-icon-end{display:block}
 
+/* removable tool icon state: exactly one icon visible by dentition + start/end state */
+#odontogramaTools .removable-tool-btn .removable-icon{display:none}
+
+/* adulto */
+#odontogramaTools:not(.tipo-nino) .removable-tool-btn:not(.removable-has-start) .tool-shape-adult.removable-icon-start{display:block}
+#odontogramaTools:not(.tipo-nino) .removable-tool-btn.removable-has-start .tool-shape-adult.removable-icon-end{display:block}
+
+/* niño */
+#odontogramaTools.tipo-nino .removable-tool-btn:not(.removable-has-start) .tool-shape-nino.removable-icon-start{display:block}
+#odontogramaTools.tipo-nino .removable-tool-btn.removable-has-start .tool-shape-nino.removable-icon-end{display:block}
+
 /* Lines between quadrants: draw simple Cartesian axes (black lines) centered between grid cells */
 .odontograma-area .odontograma-grid{position:relative}
 .odontograma-area .odontograma-grid::before{content:'';position:absolute;left:53.6%;top:0;bottom:0;width:2px;background:#000;opacity:0.15;transform:translateX(-50%);pointer-events:none}
@@ -207,6 +218,25 @@
 .odontograma-grid .bridge-line.bridge-color-blue{background:rgba(0,123,255,0.92)}
 .odontograma-grid .bridge-line.bridge-color-red{background:rgba(220,53,69,0.92)}
 .odontograma-grid .bridge-line.bridge-color-mixed{background:linear-gradient(90deg, rgba(0,123,255,0.92) 0%, rgba(220,53,69,0.92) 100%)}
+
+/* Puente parcial removible */
+.tooth.removable-pending{box-shadow:0 0 0 2px rgba(255,193,7,0.65)}
+.tooth .removable-anchor{position:absolute;left:-2px;top:-2px;width:calc(100% + 4px);height:calc(100% + 4px);border:3px solid transparent;border-radius:4px;z-index:9;pointer-events:none;box-sizing:border-box}
+.odontograma-area.tipo-nino .tooth .removable-anchor{border-radius:50%}
+.tooth .removable-anchor.side-left{border-top-color:currentColor;border-bottom-color:currentColor;border-left-color:currentColor}
+.tooth .removable-anchor.side-right{border-top-color:currentColor;border-bottom-color:currentColor;border-right-color:currentColor}
+
+.tooth.removable-color-blue{color:rgba(0,123,255,0.95)}
+.tooth.removable-color-red{color:rgba(220,53,69,0.95)}
+
+
+.odontograma-grid .removable-zigzag{position:absolute;overflow:visible;pointer-events:none;z-index:8}
+.odontograma-grid .removable-zigzag path,
+.odontograma-grid .removable-zigzag polyline{fill:none;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.odontograma-grid .removable-zigzag.removable-color-blue path,
+.odontograma-grid .removable-zigzag.removable-color-blue polyline{stroke:rgba(0,123,255,0.92)}
+.odontograma-grid .removable-zigzag.removable-color-red path,
+.odontograma-grid .removable-zigzag.removable-color-red polyline{stroke:rgba(220,53,69,0.92)}
 
 /* Mixed state fallback: purple stroke for total segments */
 /* Mixed state: show inner parts blue and outer parts red for segments */

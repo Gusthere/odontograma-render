@@ -109,6 +109,7 @@
       ];
 
       var bridgeMarks = [];
+      var removableMarks = [];
 
       function getBridgeOrders(tipo) {
         if (tipo === "nino") {
@@ -135,6 +136,14 @@
 
       function getBridgeColorClass(color) {
         return "bridge-color-" + normalizeBridgeColor(color);
+      }
+
+      function normalizeRemovableColor(color) {
+        return normalizeBridgeColor(color);
+      }
+
+      function getRemovableColorClass(color) {
+        return "removable-color-" + normalizeRemovableColor(color);
       }
 
       function getBridgeRowForCoord(coord, tipo) {
@@ -168,11 +177,28 @@
         return d === "puente_fin" || d === "puente_fi" || d.indexOf("puente_f") === 0;
       }
 
+      function isRemovableStartDamage(dano) {
+        var d = (dano || "").toString().toLowerCase();
+        return d === "remov_ini" || d === "remov_in" || d.indexOf("remov_i") === 0;
+      }
+
+      function isRemovableEndDamage(dano) {
+        var d = (dano || "").toString().toLowerCase();
+        return d === "remov_fin" || d === "remov_fi" || d.indexOf("remov_f") === 0;
+      }
+
       function clearBridgeVisualElements() {
         var $area = $("#odontogramaArea");
         $area.find(".bridge-line").remove();
         $area.find(".bridge-anchor, .bridge-cross").remove();
         $area.find(".tooth").removeClass("bridge-endpoint bridge-middle bridge-color-blue bridge-color-red bridge-color-mixed");
+      }
+
+      function clearRemovableVisualElements() {
+        var $area = $("#odontogramaArea");
+        $area.find(".removable-zigzag").remove();
+        $area.find(".removable-anchor").remove();
+        $area.find(".tooth").removeClass("removable-endpoint removable-color-blue removable-color-red removable-color-mixed");
       }
 
       function renderBridgeMarks() {
@@ -229,6 +255,85 @@
         });
       }
 
+      function renderRemovableMarks() {
+        clearRemovableVisualElements();
+        if (!Array.isArray(removableMarks) || !removableMarks.length) return;
+        var tipo = getCurrentDentitionType();
+        var $grid = $("#odontogramaArea .odontograma-grid");
+        if (!$grid.length) return;
+        var gridOffset = $grid.offset();
+        if (!gridOffset) return;
+
+        removableMarks.forEach(function (mark) {
+          var row = mark && mark.row === "inf" ? "inf" : "sup";
+          var color = normalizeRemovableColor(mark && mark.color);
+          var colorClass = getRemovableColorClass(color);
+          var si = getBridgeIndex(mark.startCoord, row, tipo);
+          var ei = getBridgeIndex(mark.endCoord, row, tipo);
+          if (si < 0 || ei < 0 || si === ei) return;
+
+          var startIndex = Math.min(si, ei);
+          var endIndex = Math.max(si, ei);
+          var list = getBridgeOrders(tipo)[row];
+
+          var firstCoord = list[startIndex];
+          var lastCoord = list[endIndex];
+          var $first = $("#odontogramaArea .tooth[data-tooth='" + firstCoord + "']");
+          var $last = $("#odontogramaArea .tooth[data-tooth='" + lastCoord + "']");
+          if (!$first.length || !$last.length) return;
+
+          var firstColorClass = color === "mixed" ? "removable-color-blue" : colorClass;
+          var lastColorClass = color === "mixed" ? "removable-color-red" : colorClass;
+          $first.addClass("removable-endpoint " + firstColorClass);
+          $last.addClass("removable-endpoint " + lastColorClass);
+          if (!$first.find(".removable-anchor").length) $first.append('<span class="removable-anchor side-right"></span>');
+          if (!$last.find(".removable-anchor").length) $last.append('<span class="removable-anchor side-left"></span>');
+
+          var firstOffset = $first.offset();
+          var lastOffset = $last.offset();
+          if (!firstOffset || !lastOffset) return;
+          var x1 = firstOffset.left - gridOffset.left + $first.outerWidth() - 1;
+          var x2 = lastOffset.left - gridOffset.left + 1;
+          var left = Math.min(x1, x2);
+          var width = Math.max(8, Math.abs(x2 - x1));
+          var y = firstOffset.top - gridOffset.top + $first.outerHeight() * 0.48;
+          var h = 10;
+          var step = 8;
+          var amp = 3;
+          var points = [];
+          for (var px = 0; px <= width; px += step) {
+            var py = Math.floor(px / step) % 2 === 0 ? h / 2 + amp : h / 2 - amp;
+            points.push(px + "," + py);
+          }
+          if (width % step !== 0) {
+            var lastPy = Math.floor(width / step) % 2 === 0 ? h / 2 + amp : h / 2 - amp;
+            points.push(width + "," + lastPy);
+          }
+
+          var pathData = "";
+          for (var pi = 0; pi < points.length; pi++) {
+            var p = points[pi].split(",");
+            if (pi === 0) pathData += "M" + p[0] + " " + p[1];
+            else pathData += " L" + p[0] + " " + p[1];
+          }
+
+          var strokeValue = "rgba(0,123,255,0.92)";
+          var defs = "";
+          if (color === "red") {
+            strokeValue = "rgba(220,53,69,0.92)";
+          } else if (color === "mixed") {
+            var gradId = "removable_mix_" + Math.random().toString(36).slice(2);
+            defs = '<defs><linearGradient id="' + gradId + '" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#007bff"/><stop offset="50%" stop-color="#007bff"/><stop offset="50%" stop-color="#dc3545"/><stop offset="100%" stop-color="#dc3545"/></linearGradient></defs>';
+            strokeValue = "url(#" + gradId + ")";
+          }
+
+          var svg = '<svg class="removable-zigzag ' + colorClass + '" width="' + width + '" height="' + h + '" viewBox="0 0 ' + width + ' ' + h + '">' + defs + '<path d="' + pathData + '" class="removable-zig-line" stroke="' + strokeValue + '"></path></svg>';
+          var $zig = $(svg);
+          $zig.css({ left: left + "px", top: y + "px" });
+          $grid.append($zig);
+        });
+      }
+
       function rebuildBridgesFromRecords(startRecords, endRecords, tipo) {
         bridgeMarks = [];
         ["sup", "inf"].forEach(function (row) {
@@ -257,6 +362,36 @@
           });
         });
         renderBridgeMarks();
+      }
+
+      function rebuildRemovablesFromRecords(startRecords, endRecords, tipo) {
+        removableMarks = [];
+        ["sup", "inf"].forEach(function (row) {
+          ["blue", "red", "mixed"].forEach(function (color) {
+            var starts = (startRecords || []).filter(function (r) {
+              return r.row === row && normalizeRemovableColor(r.color) === color;
+            });
+            var ends = (endRecords || []).filter(function (r) {
+              return r.row === row && normalizeRemovableColor(r.color) === color;
+            });
+            starts.sort(function (a, b) {
+              return getBridgeIndex(a.coord, row, tipo) - getBridgeIndex(b.coord, row, tipo);
+            });
+            ends.sort(function (a, b) {
+              return getBridgeIndex(a.coord, row, tipo) - getBridgeIndex(b.coord, row, tipo);
+            });
+            var len = Math.min(starts.length, ends.length);
+            for (var i = 0; i < len; i++) {
+              removableMarks.push({
+                startCoord: starts[i].coord,
+                endCoord: ends[i].coord,
+                row: row,
+                color: color,
+              });
+            }
+          });
+        });
+        renderRemovableMarks();
       }
 
       /* ================================
@@ -380,6 +515,8 @@
 
         var bridgeStartRecords = [];
         var bridgeEndRecords = [];
+        var removableStartRecords = [];
+        var removableEndRecords = [];
         arr.forEach(function (d) {
           try {
             const coord = String(d.coordenada || "");
@@ -402,6 +539,14 @@
             }
             if (isBridgeEndDamage(dano)) {
               bridgeEndRecords.push({ coord: coord, row: bRow, color: color || "blue" });
+              return;
+            }
+            if (isRemovableStartDamage(dano)) {
+              removableStartRecords.push({ coord: coord, row: bRow, color: color || "blue" });
+              return;
+            }
+            if (isRemovableEndDamage(dano)) {
+              removableEndRecords.push({ coord: coord, row: bRow, color: color || "blue" });
               return;
             }
 
@@ -574,6 +719,7 @@
         });
 
           rebuildBridgesFromRecords(bridgeStartRecords, bridgeEndRecords, inferred);
+          rebuildRemovablesFromRecords(removableStartRecords, removableEndRecords, inferred);
 
         // bloquear select de tipo si existe
         try {
@@ -588,7 +734,9 @@
       function renderOdontograma(tipo) {
         var $area = $("#odontogramaArea").empty();
         bridgeMarks = [];
+        removableMarks = [];
         clearBridgeVisualElements();
+        clearRemovableVisualElements();
         // Agregar/remover clase para diferenciar estilos de adultos vs niños
         if (tipo === "nino") {
           $area.addClass("tipo-nino");
@@ -836,6 +984,7 @@
         $area.append($table);
         adjustChildBottomLines();
         renderBridgeMarks();
+        renderRemovableMarks();
       }
 
       function adjustChildBottomLines() {
