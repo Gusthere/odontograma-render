@@ -108,6 +108,157 @@
         "75",
       ];
 
+      var bridgeMarks = [];
+
+      function getBridgeOrders(tipo) {
+        if (tipo === "nino") {
+          return {
+            sup: ["55", "54", "53", "52", "51", "61", "62", "63", "64", "65"],
+            inf: ["85", "84", "83", "82", "81", "71", "72", "73", "74", "75"],
+          };
+        }
+        return {
+          sup: ["18", "17", "16", "15", "14", "13", "12", "11", "21", "22", "23", "24", "25", "26", "27", "28"],
+          inf: ["48", "47", "46", "45", "44", "43", "42", "41", "31", "32", "33", "34", "35", "36", "37", "38"],
+        };
+      }
+
+      function getCurrentDentitionType() {
+        return $("#odontogramaArea").hasClass("tipo-nino") ? "nino" : "adulto";
+      }
+
+      function normalizeBridgeColor(color) {
+        var c = (color || "").toString().toLowerCase();
+        if (c === "red" || c === "mixed") return c;
+        return "blue";
+      }
+
+      function getBridgeColorClass(color) {
+        return "bridge-color-" + normalizeBridgeColor(color);
+      }
+
+      function getBridgeRowForCoord(coord, tipo) {
+        var orders = getBridgeOrders(tipo || getCurrentDentitionType());
+        var c = String(coord || "");
+        if (orders.sup.indexOf(c) !== -1) return "sup";
+        if (orders.inf.indexOf(c) !== -1) return "inf";
+        return null;
+      }
+
+      function getBridgeIndex(coord, row, tipo) {
+        var orders = getBridgeOrders(tipo || getCurrentDentitionType());
+        var list = row === "inf" ? orders.inf : orders.sup;
+        return list.indexOf(String(coord || ""));
+      }
+
+      function bridgeRowFromUbicOrCoord(ubic, coord, tipo) {
+        var u = (ubic || "").toString().toLowerCase();
+        if (u.indexOf("sup") !== -1) return "sup";
+        if (u.indexOf("inf") !== -1) return "inf";
+        return getBridgeRowForCoord(coord, tipo);
+      }
+
+      function isBridgeStartDamage(dano) {
+        var d = (dano || "").toString().toLowerCase();
+        return d === "puente_ini" || d === "puente_in" || d.indexOf("puente_i") === 0;
+      }
+
+      function isBridgeEndDamage(dano) {
+        var d = (dano || "").toString().toLowerCase();
+        return d === "puente_fin" || d === "puente_fi" || d.indexOf("puente_f") === 0;
+      }
+
+      function clearBridgeVisualElements() {
+        var $area = $("#odontogramaArea");
+        $area.find(".bridge-line").remove();
+        $area.find(".bridge-anchor, .bridge-cross").remove();
+        $area.find(".tooth").removeClass("bridge-endpoint bridge-middle bridge-color-blue bridge-color-red bridge-color-mixed");
+      }
+
+      function renderBridgeMarks() {
+        clearBridgeVisualElements();
+        if (!Array.isArray(bridgeMarks) || !bridgeMarks.length) return;
+        var tipo = getCurrentDentitionType();
+        var $grid = $("#odontogramaArea .odontograma-grid");
+        if (!$grid.length) return;
+        var gridOffset = $grid.offset();
+        if (!gridOffset) return;
+
+        bridgeMarks.forEach(function (mark) {
+          var row = mark && mark.row === "inf" ? "inf" : "sup";
+          var color = normalizeBridgeColor(mark && mark.color);
+          var colorClass = getBridgeColorClass(color);
+          var si = getBridgeIndex(mark.startCoord, row, tipo);
+          var ei = getBridgeIndex(mark.endCoord, row, tipo);
+          if (si < 0 || ei < 0 || si === ei) return;
+
+          var startIndex = Math.min(si, ei);
+          var endIndex = Math.max(si, ei);
+          var list = getBridgeOrders(tipo)[row];
+
+          for (var idx = startIndex; idx <= endIndex; idx++) {
+            var coord = list[idx];
+            var $tooth = $("#odontogramaArea .tooth[data-tooth='" + coord + "']");
+            if (!$tooth.length) continue;
+            $tooth.addClass(colorClass);
+            if (idx === startIndex || idx === endIndex) {
+              $tooth.addClass("bridge-endpoint");
+              if (!$tooth.find(".bridge-anchor").length) $tooth.append('<span class="bridge-anchor"></span>');
+            } else {
+              $tooth.addClass("bridge-middle");
+              if (!$tooth.find(".bridge-cross").length) $tooth.append('<span class="bridge-cross"></span>');
+            }
+          }
+
+          var firstCoord = list[startIndex];
+          var lastCoord = list[endIndex];
+          var $first = $("#odontogramaArea .tooth[data-tooth='" + firstCoord + "']");
+          var $last = $("#odontogramaArea .tooth[data-tooth='" + lastCoord + "']");
+          if (!$first.length || !$last.length) return;
+          var firstOffset = $first.offset();
+          var lastOffset = $last.offset();
+          if (!firstOffset || !lastOffset) return;
+          var x1 = firstOffset.left - gridOffset.left + $first.outerWidth() / 2;
+          var x2 = lastOffset.left - gridOffset.left + $last.outerWidth() / 2;
+          var y = firstOffset.top - gridOffset.top + $first.outerHeight() + 8;
+          var left = Math.min(x1, x2);
+          var width = Math.max(4, Math.abs(x2 - x1));
+          var $line = $('<div class="bridge-line ' + colorClass + '"></div>');
+          $line.css({ left: left + "px", top: y + "px", width: width + "px" });
+          $grid.append($line);
+        });
+      }
+
+      function rebuildBridgesFromRecords(startRecords, endRecords, tipo) {
+        bridgeMarks = [];
+        ["sup", "inf"].forEach(function (row) {
+          ["blue", "red", "mixed"].forEach(function (color) {
+            var starts = (startRecords || []).filter(function (r) {
+              return r.row === row && normalizeBridgeColor(r.color) === color;
+            });
+            var ends = (endRecords || []).filter(function (r) {
+              return r.row === row && normalizeBridgeColor(r.color) === color;
+            });
+            starts.sort(function (a, b) {
+              return getBridgeIndex(a.coord, row, tipo) - getBridgeIndex(b.coord, row, tipo);
+            });
+            ends.sort(function (a, b) {
+              return getBridgeIndex(a.coord, row, tipo) - getBridgeIndex(b.coord, row, tipo);
+            });
+            var len = Math.min(starts.length, ends.length);
+            for (var i = 0; i < len; i++) {
+              bridgeMarks.push({
+                startCoord: starts[i].coord,
+                endCoord: ends[i].coord,
+                row: row,
+                color: color,
+              });
+            }
+          });
+        });
+        renderBridgeMarks();
+      }
+
       /* ================================
         HELPERS
       ================================ */
@@ -227,6 +378,8 @@
         // volver a renderizar odontograma con el tipo inferido
         renderOdontograma(inferred);
 
+        var bridgeStartRecords = [];
+        var bridgeEndRecords = [];
         arr.forEach(function (d) {
           try {
             const coord = String(d.coordenada || "");
@@ -241,6 +394,16 @@
             if (!$tooth.length) return;
 
             const $svg = $tooth.find("svg");
+
+            var bRow = bridgeRowFromUbicOrCoord(ubic, coord, inferred);
+            if (isBridgeStartDamage(dano)) {
+              bridgeStartRecords.push({ coord: coord, row: bRow, color: color || "blue" });
+              return;
+            }
+            if (isBridgeEndDamage(dano)) {
+              bridgeEndRecords.push({ coord: coord, row: bRow, color: color || "blue" });
+              return;
+            }
 
             // =========================
             // EXTRACCIÓN / TOTAL
@@ -410,6 +573,8 @@
           }
         });
 
+          rebuildBridgesFromRecords(bridgeStartRecords, bridgeEndRecords, inferred);
+
         // bloquear select de tipo si existe
         try {
           $("#tipo_dentadura").prop("disabled", true);
@@ -422,6 +587,8 @@
 
       function renderOdontograma(tipo) {
         var $area = $("#odontogramaArea").empty();
+        bridgeMarks = [];
+        clearBridgeVisualElements();
         // Agregar/remover clase para diferenciar estilos de adultos vs niños
         if (tipo === "nino") {
           $area.addClass("tipo-nino");
@@ -668,6 +835,7 @@
 
         $area.append($table);
         adjustChildBottomLines();
+        renderBridgeMarks();
       }
 
       function adjustChildBottomLines() {

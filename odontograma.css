@@ -91,6 +91,17 @@
 .tool-tooth.show-right .mark-grey-right{opacity:1}
 .tool-tooth.show-bottom .mark-grey-bottom{opacity:1}
 
+/* bridge tool icon state: exactly one icon visible by dentition + start/end state */
+#odontogramaTools .bridge-tool-btn .bridge-icon{display:none}
+
+/* adulto */
+#odontogramaTools:not(.tipo-nino) .bridge-tool-btn:not(.bridge-has-start) .tool-shape-adult.bridge-icon-start{display:block}
+#odontogramaTools:not(.tipo-nino) .bridge-tool-btn.bridge-has-start .tool-shape-adult.bridge-icon-end{display:block}
+
+/* niño */
+#odontogramaTools.tipo-nino .bridge-tool-btn:not(.bridge-has-start) .tool-shape-nino.bridge-icon-start{display:block}
+#odontogramaTools.tipo-nino .bridge-tool-btn.bridge-has-start .tool-shape-nino.bridge-icon-end{display:block}
+
 /* Lines between quadrants: draw simple Cartesian axes (black lines) centered between grid cells */
 .odontograma-area .odontograma-grid{position:relative}
 .odontograma-area .odontograma-grid::before{content:'';position:absolute;left:53.6%;top:0;bottom:0;width:2px;background:#000;opacity:0.15;transform:translateX(-50%);pointer-events:none}
@@ -170,6 +181,32 @@
 .tooth-svg .bottom-line-inner.mark-mixed { transform: translateY(-3px); }
 .tooth-svg .bottom-line-outer.mark-red,
 .tooth-svg .bottom-line-outer.mark-mixed { transform: translateY(3px); }
+
+/* Puente fijo */
+.tooth.bridge-pending{box-shadow:0 0 0 2px rgba(255,193,7,0.65)}
+.tooth .bridge-anchor{position:absolute;left:50%;bottom:-11px;width:9px;height:9px;transform:translateX(-50%);border-radius:2px;z-index:9;pointer-events:none}
+.tooth .bridge-cross{position:absolute;inset:2px;z-index:8;pointer-events:none}
+.tooth .bridge-cross::before,
+.tooth .bridge-cross::after{content:'';position:absolute;left:10%;right:10%;top:50%;height:3px;border-radius:2px;transform-origin:center}
+.tooth .bridge-cross::before{transform:translateY(-50%) rotate(36deg)}
+.tooth .bridge-cross::after{transform:translateY(-50%) rotate(-36deg)}
+.odontograma-area.tipo-nino .tooth .bridge-cross{inset:1px}
+
+.tooth.bridge-color-blue .bridge-anchor{background:rgba(0,123,255,0.95)}
+.tooth.bridge-color-red .bridge-anchor{background:rgba(220,53,69,0.95)}
+.tooth.bridge-color-mixed .bridge-anchor{background:linear-gradient(90deg, rgba(0,123,255,0.95) 0%, rgba(220,53,69,0.95) 100%)}
+
+.tooth.bridge-color-blue .bridge-cross::before,
+.tooth.bridge-color-blue .bridge-cross::after{background:rgba(0,123,255,0.92)}
+.tooth.bridge-color-red .bridge-cross::before,
+.tooth.bridge-color-red .bridge-cross::after{background:rgba(220,53,69,0.92)}
+.tooth.bridge-color-mixed .bridge-cross::before,
+.tooth.bridge-color-mixed .bridge-cross::after{background:linear-gradient(90deg, rgba(0,123,255,0.92) 0%, rgba(220,53,69,0.92) 100%)}
+
+.odontograma-grid .bridge-line{position:absolute;height:3px;border-radius:2px;z-index:8;pointer-events:none}
+.odontograma-grid .bridge-line.bridge-color-blue{background:rgba(0,123,255,0.92)}
+.odontograma-grid .bridge-line.bridge-color-red{background:rgba(220,53,69,0.92)}
+.odontograma-grid .bridge-line.bridge-color-mixed{background:linear-gradient(90deg, rgba(0,123,255,0.92) 0%, rgba(220,53,69,0.92) 100%)}
 
 /* Mixed state fallback: purple stroke for total segments */
 /* Mixed state: show inner parts blue and outer parts red for segments */
