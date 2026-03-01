@@ -108,6 +108,11 @@
 .tooth-svg .region.mark-blue{fill:rgba(0,123,255,0.70)}
 .tooth-svg .region.mark-red{fill:rgba(220,53,69,0.72)}
 
+.tooth-svg .diag-partial{stroke:transparent;stroke-width:12;stroke-linecap:round;pointer-events:none}
+.tooth-svg .diag-partial.mark-blue{stroke:rgba(0,123,255,0.95)}
+.tooth-svg .diag-partial.mark-red{stroke:rgba(220,53,69,0.95)}
+.tooth-svg .diag-partial.mark-mixed{stroke:url(#g_diag_mixed)}
+
 /* Tamaño de caries (SVG): ajustar intensidad manteniendo el color/gradiente */
 .tooth-svg .region.caries-size-1{fill-opacity:0.45}
 .tooth-svg .region.caries-size-2{fill-opacity:0.75}

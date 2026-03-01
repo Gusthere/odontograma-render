@@ -132,6 +132,30 @@
         else if (size === 3) $reg.addClass("caries-size-3");
       }
 
+      function isDiagonalDamage(dano) {
+        var d = (dano || "").toString().toLowerCase();
+        return (
+          d === "diag_parci"
+        );
+      }
+
+      function clearDiagonalMark($tooth, region) {
+        if (!$tooth || !region) return;
+        $tooth
+          .find(".diag-partial-" + region)
+          .removeClass("mark-blue mark-red mark-mixed");
+      }
+
+      function setDiagonalMark($tooth, region, color) {
+        if (!$tooth || !region) return;
+        clearDiagonalMark($tooth, region);
+        var $line = $tooth.find(".diag-partial-" + region);
+        if (!$line.length) return;
+        if (color === "mixed") $line.addClass("mark-mixed");
+        else if (color === "red") $line.addClass("mark-red");
+        else $line.addClass("mark-blue");
+      }
+
       /* ================================
         APLICAR DAÑOS
       ================================ */
@@ -267,6 +291,13 @@
             const $reg = $tooth.find('.region[data-region="' + region + '"]');
             if (!$reg.length) return;
 
+            if (isDiagonalDamage(d.dano)) {
+              $reg.removeClass("mark-blue mark-red mark-mixed").removeAttr("fill").css("fill", "");
+              setCariesSize($reg, 0);
+              setDiagonalMark($tooth, region, color || "blue");
+              return;
+            }
+
             // tamaño: por compatibilidad, si no viene tamaño, asumimos 3
             var size = 3;
             try {
@@ -367,6 +398,10 @@
               '      <stop offset="0%" stop-color="#007bff"/>\n' +
               '      <stop offset="100%" stop-color="#dc3545"/>\n' +
               "    </radialGradient>\n" +
+              '    <linearGradient id="g_diag_mixed" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="200" y2="200">\n' +
+              '      <stop offset="0%" stop-color="#007bff"/>\n' +
+              '      <stop offset="100%" stop-color="#dc3545"/>\n' +
+              "    </linearGradient>\n" +
               "  </defs>\n" +
               '  <circle cx="100" cy="100" r="90" class="stroke"/>\n' +
               '  <circle cx="100" cy="100" r="40" class="stroke"/>\n' +
@@ -379,6 +414,11 @@
               '  <path d="M163.6 163.6 A90 90 0 0 1 36.4 163.6 L71.7 128.3 A40 40 0 0 0 128.3 128.3 Z" class="region" data-region="bottom"/>\n' +
               '  <path d="M36.4 163.6 A90 90 0 0 1 36.4 36.4 L71.7 71.7 A40 40 0 0 0 71.7 128.3 Z" class="region" data-region="left"/>\n' +
               '  <circle cx="100" cy="100" r="40" class="region" data-region="center"/>\n' +
+              '  <line class="diag-partial diag-partial-top" x1="84" y1="20" x2="122" y2="60"/>\n' +
+              '  <line class="diag-partial diag-partial-right" x1="146" y1="84" x2="180" y2="122"/>\n' +
+              '  <line class="diag-partial diag-partial-bottom" x1="84" y1="140" x2="122" y2="180"/>\n' +
+              '  <line class="diag-partial diag-partial-left" x1="60" y1="122" x2="20" y2="84"/>\n' +
+              '  <line class="diag-partial diag-partial-center" x1="82" y1="82" x2="118" y2="118"/>\n' +
               "  <!-- total marks: center-line (inner/outer), outline (inner/outer), bottom-line (inner/outer) -->\n" +
               '  <path class="center-line-inner" d="M98 140 L98 10" stroke-linecap="round" stroke-width="6" fill="none"/>\n' +
               '  <path class="center-line-outer" d="M102 140 L102 10" stroke-linecap="round" stroke-width="6" fill="none"/>\n' +
@@ -412,6 +452,10 @@
               '      <stop offset="0%" stop-color="#007bff"/>\n' +
               '      <stop offset="100%" stop-color="#dc3545"/>\n' +
               "    </radialGradient>\n" +
+              '    <linearGradient id="g_diag_mixed" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="200" y2="200">\n' +
+              '      <stop offset="0%" stop-color="#007bff"/>\n' +
+              '      <stop offset="100%" stop-color="#dc3545"/>\n' +
+              "    </linearGradient>\n" +
               "  </defs>\n" +
               '  <rect x="10" y="10" width="180" height="180" class="stroke"/>\n' +
               '  <rect x="65" y="65" width="70" height="70" class="stroke"/>\n' +
@@ -424,6 +468,11 @@
               '  <polygon points="10,190 190,190 135,135 65,135" class="region" data-region="bottom"/>\n' +
               '  <polygon points="10,10 10,190 65,135 65,65" class="region" data-region="left"/>\n' +
               '  <rect x="65" y="65" width="70" height="70" class="region" data-region="center"/>\n' +
+              '  <line class="diag-partial diag-partial-top" x1="78" y1="24" x2="122" y2="58"/>\n' +
+              '  <line class="diag-partial diag-partial-right" x1="148" y1="76" x2="176" y2="122"/>\n' +
+              '  <line class="diag-partial diag-partial-bottom" x1="78" y1="142" x2="122" y2="176"/>\n' +
+              '  <line class="diag-partial diag-partial-left" x1="24" y1="78" x2="58" y2="122"/>\n' +
+              '  <line class="diag-partial diag-partial-center" x1="76" y1="76" x2="124" y2="124"/>\n' +
               "  <!-- total marks placeholders -->\n" +
               '  <path class="center-line-inner" d="M98 135 L98 10" stroke-linecap="round" stroke-width="6" fill="none"/>\n' +
               '  <path class="center-line-outer" d="M102 135 L102 10" stroke-linecap="round" stroke-width="6" fill="none"/>\n' +
