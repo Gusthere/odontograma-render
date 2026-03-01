@@ -341,6 +341,20 @@
               return;
             }
 
+            if (dano === "corona_tot" || dano === "corona" || dano === "crown" || dano === "overlay_co" || dano.indexOf("corona_t") === 0) {
+              $tooth.addClass("overlay-corona");
+
+              if (color === "blue") {
+                $tooth.addClass("mark-blue");
+              } else if (color === "red") {
+                $tooth.addClass("mark-red");
+              } else if (color === "mixed") {
+                $tooth.addClass("mark-mixed");
+              }
+
+              return;
+            }
+
             // =========================
             // MARCAS POR REGIÓN
             // =========================

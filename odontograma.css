@@ -51,6 +51,7 @@
 .odontograma-area.tipo-nino .tooth.extraction::after{border-radius:50%}
 .odontograma-area.tipo-nino .tooth.overlay-s::after{border-radius:50%}
 .odontograma-area.tipo-nino .tooth.overlay-minus::after{border-radius:50%}
+.odontograma-area.tipo-nino .tooth.overlay-corona::after{border-radius:50%}
 /* Número del diente: mostrar arriba (fuera del diente) */
 .tooth-number{position:absolute;left:50%;top:-18px;transform:translateX(-50%);font-size:13px;color:#111827;font-weight:800;z-index:12;background:transparent;padding:0;border-radius:0;pointer-events:none;white-space:nowrap;text-shadow:0 1px 0 rgba(255,255,255,0.95);user-select:none;-webkit-user-select:none;-ms-user-select:none}
 
@@ -190,6 +191,13 @@
 .tooth.overlay-minus.mark-red::after{background:rgba(220,53,69,0.95)}
 .tooth.overlay-minus.mark-blue::after{background:rgba(0,123,255,0.95)}
 .tooth.overlay-minus.mark-mixed::after{background:linear-gradient(90deg, rgba(0,123,255,0.95) 0%, rgba(220,53,69,0.95) 100%)}
+
+/* overlay coronas (total): translucent circle that covers all the tooth */
+.tooth.overlay-corona::after{content:'';position:absolute;left:-3px;top:-3px;width:calc(100% + 6px);height:calc(100% + 6px);border-radius:50%;z-index:6;pointer-events:none}
+.tooth.overlay-corona.mark-blue::after{background:rgba(0,123,255,0.52)}
+.tooth.overlay-corona.mark-red::after{background:rgba(220,53,69,0.52)}
+.tooth.overlay-corona.mark-mixed::after{background:linear-gradient(90deg, rgba(0,123,255,0.52) 0%, rgba(220,53,69,0.52) 100%)}
+.odontograma-area.tipo-nino .tooth.overlay-corona::after{left:-5px;top:-5px;width:calc(100% + 10px);height:calc(100% + 10px)}
 
 /* Check (resuelto): indicador sin tapar el diente */
 .tooth.overlay-check::before{content:'✓';position:absolute;right:-6px;top:-6px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;background:rgba(46,125,50,0.95);color:#fff;font-weight:900;font-size:14px;border-radius:999px;z-index:10;pointer-events:none;box-shadow:0 1px 2px rgba(0,0,0,0.25)}
