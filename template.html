@@ -327,6 +327,20 @@
               return;
             }
 
+            if (dano === "overlay_minus" || dano === "overlay-minus" || dano === "minus_overlay" || dano === "overlay_mi") {
+              $tooth.addClass("overlay-minus");
+
+              if (color === "blue") {
+                $tooth.addClass("mark-blue");
+              } else if (color === "red") {
+                $tooth.addClass("mark-red");
+              } else if (color === "mixed") {
+                $tooth.addClass("mark-mixed");
+              }
+
+              return;
+            }
+
             // =========================
             // MARCAS POR REGIÓN
             // =========================
