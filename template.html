@@ -110,6 +110,7 @@
 
       var bridgeMarks = [];
       var removableMarks = [];
+      var totalProsthesisMarks = [];
 
       function getBridgeOrders(tipo) {
         if (tipo === "nino") {
@@ -187,6 +188,19 @@
         return d === "remov_fin" || d === "remov_fi" || d.indexOf("remov_f") === 0;
       }
 
+      function isTotalProsthesisDamage(dano) {
+        var d = (dano || "").toString().toLowerCase();
+        return d === "prot_total" || d === "protesis_t" || d === "protesis" || d.indexOf("prot_t") === 0;
+      }
+
+      function normalizeTotalProsthesisColor(color) {
+        return normalizeBridgeColor(color);
+      }
+
+      function getTotalProsthesisColorClass(color) {
+        return "protesis-color-" + normalizeTotalProsthesisColor(color);
+      }
+
       function clearBridgeVisualElements() {
         var $area = $("#odontogramaArea");
         $area.find(".bridge-line").remove();
@@ -199,6 +213,11 @@
         $area.find(".removable-zigzag").remove();
         $area.find(".removable-anchor").remove();
         $area.find(".tooth").removeClass("removable-endpoint removable-color-blue removable-color-red removable-color-mixed");
+      }
+
+      function clearTotalProsthesisVisualElements() {
+        var $area = $("#odontogramaArea");
+        $area.find(".protesis-total-line").remove();
       }
 
       function renderBridgeMarks() {
@@ -334,6 +353,42 @@
         });
       }
 
+      function renderTotalProsthesisMarks() {
+        clearTotalProsthesisVisualElements();
+        if (!Array.isArray(totalProsthesisMarks) || !totalProsthesisMarks.length) return;
+        var tipo = getCurrentDentitionType();
+        var $grid = $("#odontogramaArea .odontograma-grid");
+        if (!$grid.length) return;
+        var gridOffset = $grid.offset();
+        if (!gridOffset) return;
+
+        totalProsthesisMarks.forEach(function(mark) {
+          var row = mark && mark.row === "inf" ? "inf" : "sup";
+          var colorClass = getTotalProsthesisColorClass(mark && mark.color);
+          var list = getBridgeOrders(tipo)[row];
+          if (!list || !list.length) return;
+
+          var firstCoord = list[0];
+          var lastCoord = list[list.length - 1];
+          var $first = $("#odontogramaArea .tooth[data-tooth='" + firstCoord + "']");
+          var $last = $("#odontogramaArea .tooth[data-tooth='" + lastCoord + "']");
+          if (!$first.length || !$last.length) return;
+
+          var firstOffset = $first.offset();
+          var lastOffset = $last.offset();
+          if (!firstOffset || !lastOffset) return;
+
+          var left = firstOffset.left - gridOffset.left + 2;
+          var right = lastOffset.left - gridOffset.left + $last.outerWidth() - 2;
+          var width = Math.max(8, right - left);
+          var y = firstOffset.top - gridOffset.top + $first.outerHeight() / 2 - 2;
+
+          var $line = $('<div class="protesis-total-line ' + colorClass + '"></div>');
+          $line.css({ left: left + "px", top: y + "px", width: width + "px" });
+          $grid.append($line);
+        });
+      }
+
       function rebuildBridgesFromRecords(startRecords, endRecords, tipo) {
         bridgeMarks = [];
         ["sup", "inf"].forEach(function (row) {
@@ -392,6 +447,22 @@
           });
         });
         renderRemovableMarks();
+      }
+
+      function rebuildTotalProsthesisFromRecords(records, tipo) {
+        totalProsthesisMarks = [];
+        var byRow = {};
+        (records || []).forEach(function(r) {
+          if (!r || (r.row !== "sup" && r.row !== "inf")) return;
+          byRow[r.row] = {
+            row: r.row,
+            color: normalizeTotalProsthesisColor(r.color),
+            coord: r.coord || "",
+          };
+        });
+        if (byRow.sup) totalProsthesisMarks.push(byRow.sup);
+        if (byRow.inf) totalProsthesisMarks.push(byRow.inf);
+        renderTotalProsthesisMarks();
       }
 
       /* ================================
@@ -517,6 +588,7 @@
         var bridgeEndRecords = [];
         var removableStartRecords = [];
         var removableEndRecords = [];
+        var totalProsthesisRecords = [];
         arr.forEach(function (d) {
           try {
             const coord = String(d.coordenada || "");
@@ -547,6 +619,10 @@
             }
             if (isRemovableEndDamage(dano)) {
               removableEndRecords.push({ coord: coord, row: bRow, color: color || "blue" });
+              return;
+            }
+            if (isTotalProsthesisDamage(dano)) {
+              totalProsthesisRecords.push({ coord: coord, row: bRow, color: color || "blue" });
               return;
             }
 
@@ -720,6 +796,7 @@
 
           rebuildBridgesFromRecords(bridgeStartRecords, bridgeEndRecords, inferred);
           rebuildRemovablesFromRecords(removableStartRecords, removableEndRecords, inferred);
+          rebuildTotalProsthesisFromRecords(totalProsthesisRecords, inferred);
 
         // bloquear select de tipo si existe
         try {
@@ -735,8 +812,10 @@
         var $area = $("#odontogramaArea").empty();
         bridgeMarks = [];
         removableMarks = [];
+        totalProsthesisMarks = [];
         clearBridgeVisualElements();
         clearRemovableVisualElements();
+        clearTotalProsthesisVisualElements();
         // Agregar/remover clase para diferenciar estilos de adultos vs niños
         if (tipo === "nino") {
           $area.addClass("tipo-nino");
@@ -985,6 +1064,7 @@
         adjustChildBottomLines();
         renderBridgeMarks();
         renderRemovableMarks();
+        renderTotalProsthesisMarks();
       }
 
       function adjustChildBottomLines() {
