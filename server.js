@@ -6,6 +6,10 @@ const app = express();
 app.use(bodyParser.json({ limit: "10mb" }));
 app.disable("x-powered-by");
 
+app.get("/health", (_req, res) => {
+  res.status(200).json({ ok: true });
+});
+
 app.post("/render", async (req, res) => {
   try {
     const data = req.body.data;
