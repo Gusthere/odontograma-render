@@ -684,7 +684,7 @@
               return;
             }
 
-            if (dano === "bottom_lin") {
+            if (dano === "bottom_lin" || dano === "bottom_line" || dano === "bottomline") {
               if (color === "blue") {
                 $svg.find(".bottom-line-inner").addClass("mark-blue");
               } else if (color === "red") {
@@ -694,6 +694,14 @@
                   .find(".bottom-line-inner, .bottom-line-outer")
                   .addClass("mark-mixed");
               }
+              return;
+            }
+
+            if (dano === "cuello_exp" || dano === "cuello_expuesto" || dano === "cuello-expuesto" || dano === "exposed_neck") {
+              var $nl = $svg.find(".neck-line");
+              if (color === "blue") { $nl.addClass("mark-blue"); }
+              else if (color === "red") { $nl.addClass("mark-red"); }
+              else if (color === "mixed") { $nl.addClass("mark-mixed"); }
               return;
             }
 
@@ -919,6 +927,8 @@
               '  <circle class="outline-outer" cx="100" cy="100" r="94" fill="none" stroke-width="6"/>\n' +
               '  <line class="bottom-line-inner" x1="36.4" y1="190" x2="163.6" y2="190" stroke-linecap="round" stroke-width="6"/>\n' +
               '  <line class="bottom-line-outer" x1="34" y1="194" x2="166" y2="194" stroke-linecap="round" stroke-width="6"/>\n' +
+              '  <defs><linearGradient id="neck-gradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="200" y2="0"><stop offset="0%" stop-color="#007bff" stop-opacity="0.95"/><stop offset="100%" stop-color="#dc3545" stop-opacity="0.95"/></linearGradient></defs>\n' +
+              '  <path class="neck-line" d="M38 215 Q100 248 162 215" stroke-linecap="round" stroke-width="6" fill="none"/>\n' +
               "</svg>\n";
           } else {
             // adulto: square-based SVG with rect center, diagonal divider lines and 4 polygon zones
@@ -983,6 +993,8 @@
               '  <rect class="outline-outer" x="6" y="6" width="188" height="188" fill="none" stroke-width="6"/>\n' +
               '  <line class="bottom-line-inner" x1="10" y1="188" x2="190" y2="188" stroke-linecap="round" stroke-width="6"/>\n' +
               '  <line class="bottom-line-outer" x1="6" y1="192" x2="194" y2="192" stroke-linecap="round" stroke-width="6"/>\n' +
+              '  <defs><linearGradient id="neck-gradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="200" y2="0"><stop offset="0%" stop-color="#007bff" stop-opacity="0.95"/><stop offset="100%" stop-color="#dc3545" stop-opacity="0.95"/></linearGradient></defs>\n' +
+              '  <path class="neck-line" d="M32 218 Q100 252 168 218" stroke-linecap="round" stroke-width="6" fill="none"/>\n' +
               "</svg>\n";
           }
 
